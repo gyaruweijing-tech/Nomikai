@@ -1,0 +1,30 @@
+{
+  "name": "Nomikai — 飲み会日程調整",
+  "short_name": "Nomikai",
+  "description": "みんなの空きから自動で飲み会を提案・確定するアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf7",
+  "theme_color": "#f59e0b",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

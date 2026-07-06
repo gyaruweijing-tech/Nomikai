@@ -1,0 +1,65 @@
+// Nomikai Service Worker — プッシュ通知と最低限のオフラインシェル
+
+const CACHE = "nomikai-v1";
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/"])));
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      )
+      .then(() => self.clients.claim())
+  );
+});
+
+// ネットワーク優先、落ちたらキャッシュ（APIはキャッシュしない）
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== "GET" || url.pathname.startsWith("/api/")) {
+    return;
+  }
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE).then((c) => c.put(event.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(event.request).then((r) => r ?? caches.match("/")))
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let payload = { title: "Nomikai 🍻", body: "新しいお知らせがあります", tag: "nomikai" };
+  try {
+    payload = { ...payload, ...event.data.json() };
+  } catch {
+    /* テキストのみの場合など */
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      tag: payload.tag,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ("focus" in client) return client.focus();
+      }
+      return self.clients.openWindow("/");
+    })
+  );
+});

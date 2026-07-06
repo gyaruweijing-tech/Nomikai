@@ -1,0 +1,890 @@
+:root {
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --text: #1c1917;
+  --text-sub: #78716c;
+  --accent: #f59e0b;
+  --accent-deep: #d97706;
+  --accent-soft: #fef3c7;
+  --confirmed: #16a34a;
+  --confirmed-soft: #dcfce7;
+  --danger: #dc2626;
+  --border: #e7e5e4;
+  --radius: 16px;
+  --shadow: 0 1px 3px rgba(28, 25, 23, 0.06), 0 4px 16px rgba(28, 25, 23, 0.06);
+  --tab-h: 64px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+input,
+select {
+  font-family: inherit;
+  font-size: 16px;
+}
+
+/* ---------- レイアウト ---------- */
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 16px);
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.app-title .beer {
+  display: inline-block;
+  animation: sway 3s ease-in-out infinite;
+}
+
+.header-user {
+  font-size: 13px;
+  color: var(--text-sub);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.tab-content {
+  padding: 4px 16px 24px;
+}
+
+/* ---------- タブバー ---------- */
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  height: calc(var(--tab-h) + env(safe-area-inset-bottom));
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  max-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub);
+  transition: transform 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.tab-btn .tab-icon {
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-btn.active {
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+
+.tab-btn.active .tab-icon {
+  transform: scale(1.15);
+}
+
+.tab-btn:active {
+  transform: scale(0.94);
+}
+
+/* ---------- カード ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 14px;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.card + .card {
+  animation-delay: 0.05s;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  letter-spacing: 0.06em;
+  margin: 20px 4px 10px;
+}
+
+/* ---------- ヒーロー（次の飲み会） ---------- */
+
+.hero {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b 60%, #ea8a0a);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 22px 20px;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: "🍻";
+  position: absolute;
+  right: -8px;
+  bottom: -14px;
+  font-size: 92px;
+  opacity: 0.18;
+  transform: rotate(-12deg);
+}
+
+.hero .hero-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+}
+
+.hero .hero-date {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.hero .hero-slot {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.hero .hero-countdown {
+  display: inline-block;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+
+.hero .hero-members {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-empty {
+  text-align: center;
+  padding: 28px 20px;
+}
+
+.hero-empty .big {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 6px;
+  animation: sway 3s ease-in-out infinite;
+}
+
+.hero-empty p {
+  color: var(--text-sub);
+  font-size: 14px;
+}
+
+/* ---------- 提案カード ---------- */
+
+.proposal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.proposal-date {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.proposal-slot {
+  font-size: 13px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.badge.auto {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.badge.random {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.badge.manual {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge.confirmed {
+  background: var(--confirmed-soft);
+  color: var(--confirmed);
+}
+
+.proposal-title {
+  font-size: 14px;
+  margin: 6px 0 10px;
+  color: var(--text-sub);
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, var(--accent-deep));
+  transition: width 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.progress-fill.done {
+  background: linear-gradient(90deg, #4ade80, var(--confirmed));
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-top: 5px;
+}
+
+.attendee-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 12px;
+}
+
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.chip.me {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 12px;
+  padding: 12px;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.btn.ghost {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+}
+
+.btn.confirmed {
+  background: var(--confirmed-soft);
+  color: var(--confirmed);
+}
+
+/* ---------- カレンダー ---------- */
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 4px 12px;
+}
+
+.cal-nav h2 {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cal-nav button {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sub);
+  padding: 4px 0;
+}
+
+.cal-dow.sat {
+  color: #2563eb;
+}
+
+.cal-dow.sun {
+  color: var(--danger);
+}
+
+.cal-cell {
+  aspect-ratio: 1 / 1.1;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.12s ease, border-color 0.15s ease,
+    background 0.15s ease;
+  position: relative;
+}
+
+.cal-cell:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.cal-cell:disabled {
+  opacity: 0.35;
+  background: transparent;
+}
+
+.cal-cell.empty {
+  visibility: hidden;
+}
+
+.cal-cell.today {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.cal-cell.selected {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.cal-cell.mine {
+  background: var(--accent-soft);
+}
+
+.cal-cell.has-event {
+  background: var(--confirmed-soft);
+  border-color: var(--confirmed);
+}
+
+.cal-dots {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.dot.mine {
+  background: var(--accent-deep);
+}
+
+.dot.others {
+  background: #a8a29e;
+}
+
+.dot.event {
+  background: var(--confirmed);
+}
+
+.cal-count {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-deep);
+}
+
+/* 日付詳細シート */
+
+.day-sheet {
+  animation: fadeInUp 0.25s ease both;
+}
+
+.day-sheet h3 {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.slot-row + .slot-row {
+  border-top: 1px solid var(--border);
+}
+
+.slot-toggle {
+  flex-shrink: 0;
+  width: 118px;
+  border-radius: 12px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--text-sub);
+  transition: all 0.15s ease;
+}
+
+.slot-toggle.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+}
+
+.slot-people {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+
+/* ---------- 提案作成フォーム ---------- */
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.form-row label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.form-row input,
+.form-row select {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  border-color: var(--accent);
+}
+
+.seg {
+  display: flex;
+  gap: 8px;
+}
+
+.seg button {
+  flex: 1;
+  border-radius: 12px;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  color: var(--text-sub);
+  transition: all 0.15s ease;
+}
+
+.seg button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stepper button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.stepper .num {
+  font-size: 20px;
+  font-weight: 800;
+  min-width: 56px;
+  text-align: center;
+}
+
+/* ---------- 名前入力ゲート ---------- */
+
+.gate {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.gate .logo {
+  font-size: 72px;
+  animation: kanpaiFloat 2.6s ease-in-out infinite;
+}
+
+.gate h1 {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 8px 0 4px;
+}
+
+.gate .sub {
+  color: var(--text-sub);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.gate form {
+  width: 100%;
+  max-width: 320px;
+}
+
+.gate input {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--surface);
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.gate input:focus {
+  border-color: var(--accent);
+}
+
+.gate .error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* ---------- 統計・メンバー ---------- */
+
+.stats-row {
+  display: flex;
+  gap: 10px;
+}
+
+.stat-tile {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.stat-tile .num {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent-deep);
+}
+
+.stat-tile .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.notice {
+  background: var(--accent-soft);
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-deep);
+  margin-bottom: 14px;
+  animation: fadeInUp 0.3s ease both;
+}
+
+.empty-note {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 14px;
+  padding: 24px 16px;
+}
+
+/* ---------- 乾杯オーバーレイ & 紙吹雪 ---------- */
+
+.kanpai-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 25, 23, 0.55);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.25s ease both;
+}
+
+.kanpai-overlay .glasses {
+  font-size: 110px;
+  animation: kanpaiClink 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kanpai-overlay .msg {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  margin-top: 8px;
+  animation: fadeInUp 0.5s 0.3s ease both;
+}
+
+.kanpai-overlay .sub {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 4px;
+  animation: fadeInUp 0.5s 0.45s ease both;
+}
+
+.confetti-piece {
+  position: fixed;
+  top: -12px;
+  z-index: 101;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confettiFall linear both;
+  pointer-events: none;
+}
+
+/* ---------- アニメーション ---------- */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes pulseSoft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes kanpaiFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+}
+
+@keyframes kanpaiClink {
+  0% {
+    transform: scale(0.2) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes confettiFall {
+  to {
+    transform: translateY(105vh) rotate(720deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
