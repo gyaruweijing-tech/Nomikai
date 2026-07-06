@@ -22,44 +22,43 @@ const LOOKAHEAD_DAYS = 35;
 const RANDOM_INTERVAL_DAYS = 7;
 
 export async function runSchedulerTick(): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   const today = todayJST();
   const notifications: { title: string; body: string; tag: string }[] = [];
 
   // --- 1. 期限切れ ---
-  db.prepare(
-    "UPDATE proposals SET status = 'expired' WHERE status = 'open' AND date < ?"
-  ).run(today);
+  await db.execute({
+    sql: "UPDATE proposals SET status = 'expired' WHERE status = 'open' AND date < ?",
+    args: [today],
+  });
 
   // --- 2. 空きが重なった日に自動提案 ---
-  const minCount = getDefaultMinCount();
+  const minCount = await getDefaultMinCount();
   const horizon = addDays(today, LOOKAHEAD_DAYS);
-  const hotSlots = db
-    .prepare(
-      `SELECT date, slot, COUNT(DISTINCT member_id) AS cnt
-       FROM availability
-       WHERE date >= ? AND date <= ?
-       GROUP BY date, slot
-       HAVING cnt >= ?`
-    )
-    .all(today, horizon, minCount) as { date: string; slot: Slot; cnt: number }[];
-
-  const hasProposal = db.prepare(
-    "SELECT 1 FROM proposals WHERE date = ? AND slot = ? AND status != 'expired'"
-  );
-  const insertProposal = db.prepare(
-    `INSERT INTO proposals (date, slot, title, min_count, source) VALUES (?, ?, ?, ?, ?)`
-  );
+  const hotRs = await db.execute({
+    sql: `SELECT date, slot, COUNT(DISTINCT member_id) AS cnt
+          FROM availability
+          WHERE date >= ? AND date <= ?
+          GROUP BY date, slot
+          HAVING cnt >= ?`,
+    args: [today, horizon, minCount],
+  });
+  const hotSlots = hotRs.rows as unknown as {
+    date: string;
+    slot: Slot;
+    cnt: number;
+  }[];
 
   for (const hot of hotSlots) {
-    if (hasProposal.get(hot.date, hot.slot)) continue;
-    insertProposal.run(
-      hot.date,
-      hot.slot,
-      `${hot.cnt}人の空きが重なった日🍻`,
-      minCount,
-      "auto"
-    );
+    const dup = await db.execute({
+      sql: "SELECT 1 FROM proposals WHERE date = ? AND slot = ? AND status != 'expired'",
+      args: [hot.date, hot.slot],
+    });
+    if (dup.rows.length > 0) continue;
+    await db.execute({
+      sql: "INSERT INTO proposals (date, slot, title, min_count, source) VALUES (?, ?, ?, ?, 'auto')",
+      args: [hot.date, hot.slot, `${hot.cnt}人の空きが重なった日🍻`, minCount],
+    });
     notifications.push({
       title: "飲み会チャンス発見！🍺",
       body: `${formatJa(hot.date)} ${SLOT_LABEL[hot.slot]} に${hot.cnt}人が空いてる！今すぐ応募しよう`,
@@ -68,24 +67,26 @@ export async function runSchedulerTick(): Promise<void> {
   }
 
   // --- 3. ランダム提案（ガチャ） ---
-  const upcoming = db
-    .prepare(
-      "SELECT COUNT(*) AS cnt FROM proposals WHERE date >= ? AND status IN ('open','confirmed')"
-    )
-    .get(today) as { cnt: number };
-  const lastRandom = getMeta("last_random_at");
-  const memberCount = (
-    db.prepare("SELECT COUNT(*) AS cnt FROM members").get() as { cnt: number }
-  ).cnt;
+  const upcomingRs = await db.execute({
+    sql: "SELECT COUNT(*) AS cnt FROM proposals WHERE date >= ? AND status IN ('open','confirmed')",
+    args: [today],
+  });
+  const upcomingCount = Number(upcomingRs.rows[0].cnt);
+  const lastRandom = await getMeta("last_random_at");
+  const memberRs = await db.execute("SELECT COUNT(*) AS cnt FROM members");
+  const memberCount = Number(memberRs.rows[0].cnt);
 
   const randomDue =
     !lastRandom || daysBetween(lastRandom, today) >= RANDOM_INTERVAL_DAYS;
 
-  if (upcoming.cnt === 0 && randomDue && memberCount >= 2) {
+  if (upcomingCount === 0 && randomDue && memberCount >= 2) {
     const date = pickRandomDate(today);
     const slot: Slot = Math.random() < 0.5 ? "early" : "late";
-    insertProposal.run(date, slot, "運命のランダム提案🎲", minCount, "random");
-    setMeta("last_random_at", today);
+    await db.execute({
+      sql: "INSERT INTO proposals (date, slot, title, min_count, source) VALUES (?, ?, ?, ?, 'random')",
+      args: [date, slot, "運命のランダム提案🎲", minCount],
+    });
+    await setMeta("last_random_at", today);
     notifications.push({
       title: "運命の飲み会ガチャが届いた🎲",
       body: `${formatJa(date)} ${SLOT_LABEL[slot]}、どう？ ${minCount}人集まったら開催！`,
@@ -94,22 +95,26 @@ export async function runSchedulerTick(): Promise<void> {
   }
 
   // --- 4. 成立判定 ---
-  const ripe = db
-    .prepare(
-      `SELECT p.id, p.date, p.slot, COUNT(a.member_id) AS cnt
-       FROM proposals p
-       JOIN attendees a ON a.proposal_id = p.id
-       WHERE p.status = 'open'
-       GROUP BY p.id
-       HAVING cnt >= p.min_count`
-    )
-    .all() as { id: number; date: string; slot: Slot; cnt: number }[];
-
-  const confirm = db.prepare(
-    "UPDATE proposals SET status = 'confirmed', confirmed_at = datetime('now') WHERE id = ?"
+  const ripeRs = await db.execute(
+    `SELECT p.id, p.date, p.slot, COUNT(a.member_id) AS cnt
+     FROM proposals p
+     JOIN attendees a ON a.proposal_id = p.id
+     WHERE p.status = 'open'
+     GROUP BY p.id
+     HAVING cnt >= p.min_count`
   );
+  const ripe = ripeRs.rows as unknown as {
+    id: number;
+    date: string;
+    slot: Slot;
+    cnt: number;
+  }[];
+
   for (const p of ripe) {
-    confirm.run(p.id);
+    await db.execute({
+      sql: "UPDATE proposals SET status = 'confirmed', confirmed_at = datetime('now') WHERE id = ?",
+      args: [p.id],
+    });
     notifications.push({
       title: "🎉 飲み会開催決定！！",
       body: `${formatJa(p.date)} ${SLOT_LABEL[p.slot]}、${p.cnt}人で乾杯だ！`,

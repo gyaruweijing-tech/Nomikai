@@ -3,4 +3,5 @@ node_modules/
 data/
 *.db
 .env*
+!.env.example
 .DS_Store

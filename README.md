@@ -16,7 +16,7 @@
 - **PWA対応** — スマホのホーム画面に追加してアプリとして使える
 - **モチベ要素** — 次の飲み会カウントダウン、通算開催数、楽しいアニメーション
 
-## 起動方法
+## 起動方法（ローカル）
 
 ```bash
 npm install
@@ -27,14 +27,44 @@ npm start
 http://localhost:3000 を開いて名前を入れれば参加完了。
 開発時は `npm run dev`。
 
-データは `data/nomikai.db`（SQLite）に保存されます。設定ファイルや環境変数は不要です。
+環境変数なしで起動すると、データはローカルファイル `data/nomikai.db`（SQLite）に保存されます。
 
-> **プッシュ通知について**: Web Push と Service Worker は HTTPS（または localhost）でのみ動作します。公開する場合は HTTPS のあるホスティングに置いてください。
+## Vercel + Turso へのデプロイ
+
+DBは [Turso](https://turso.tech)（SQLite互換のクラウドDB、無料枠あり）を使います。
+
+1. **TursoでDBを作る**
+
+   ```bash
+   # Turso CLI をインストールしてログイン
+   curl -sSfL https://get.tur.so/install.sh | bash
+   turso auth login
+
+   # DB作成と接続情報の取得
+   turso db create nomikai
+   turso db show nomikai --url        # → TURSO_DATABASE_URL
+   turso db tokens create nomikai     # → TURSO_AUTH_TOKEN
+   ```
+
+   （CLIを入れたくない場合は https://app.turso.tech のWeb画面からでも作れます）
+
+2. **Vercelにデプロイ**
+
+   Vercelでこのリポジトリをインポートし、環境変数に以下を設定：
+
+   | 変数 | 値 |
+   | --- | --- |
+   | `TURSO_DATABASE_URL` | `libsql://nomikai-xxxx.turso.io` |
+   | `TURSO_AUTH_TOKEN` | 上で作ったトークン |
+
+   テーブルとVAPIDキーは初回アクセス時に自動作成されるので、マイグレーション作業は不要です。
+
+> **プッシュ通知について**: Web Push と Service Worker は HTTPS（または localhost）でのみ動作します。Vercel は HTTPS なのでそのまま動きます。
 
 ## 仕組み
 
 - **Next.js 15 (App Router) + React 19 + TypeScript**
-- **better-sqlite3** — サーバー内蔵のSQLite。外部DB不要
+- **@libsql/client (Turso)** — SQLite互換のクラウドDB。未設定ならローカルファイルにフォールバック
 - **web-push** — VAPID キーを初回起動時に生成して DB に保存
 - 自動開催エンジン（`lib/scheduler.ts`）は API アクセスのたびに1tick実行される lazy 方式:
   1. 過去日の未成立提案を期限切れに

@@ -11,6 +11,6 @@ export async function POST(req: Request) {
   if (!Number.isInteger(n) || n < 2 || n > 50) {
     return jsonError("成立人数は2〜50人で設定してください");
   }
-  setMeta("default_min_count", String(n));
+  await setMeta("default_min_count", String(n));
   return Response.json({ ok: true });
 }

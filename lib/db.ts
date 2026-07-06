@@ -1,22 +1,45 @@
-import Database from "better-sqlite3";
+import { createClient, type Client } from "@libsql/client";
 import fs from "node:fs";
 import path from "node:path";
 
-let db: Database.Database | null = null;
+// Turso (libSQL) クライアント。
+// TURSO_DATABASE_URL / TURSO_AUTH_TOKEN があればリモートDB、
+// なければローカルファイル data/nomikai.db にフォールバック（開発用）。
 
-export function getDb(): Database.Database {
-  if (db) return db;
+let client: Client | null = null;
+let schemaReady: Promise<void> | null = null;
+
+function localFileUrl(): string {
   const dir = path.join(process.cwd(), "data");
   fs.mkdirSync(dir, { recursive: true });
-  db = new Database(path.join(dir, "nomikai.db"));
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  migrate(db);
-  return db;
+  return `file:${path.join(dir, "nomikai.db")}`;
 }
 
-function migrate(db: Database.Database) {
-  db.exec(`
+function getClient(): Client {
+  if (!client) {
+    const url = process.env.TURSO_DATABASE_URL || localFileUrl();
+    client = createClient({
+      url,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+  }
+  return client;
+}
+
+export async function getDb(): Promise<Client> {
+  const c = getClient();
+  if (!schemaReady) {
+    schemaReady = migrate(c).catch((e) => {
+      schemaReady = null; // 失敗したら次のリクエストで再試行
+      throw e;
+    });
+  }
+  await schemaReady;
+  return c;
+}
+
+async function migrate(c: Client) {
+  await c.executeMultiple(`
     CREATE TABLE IF NOT EXISTS members (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
@@ -66,23 +89,25 @@ function migrate(db: Database.Database) {
   `);
 }
 
-export function getMeta(key: string): string | null {
-  const row = getDb()
-    .prepare("SELECT value FROM meta WHERE key = ?")
-    .get(key) as { value: string } | undefined;
-  return row?.value ?? null;
+export async function getMeta(key: string): Promise<string | null> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: "SELECT value FROM meta WHERE key = ?",
+    args: [key],
+  });
+  return (rs.rows[0]?.value as string | undefined) ?? null;
 }
 
-export function setMeta(key: string, value: string) {
-  getDb()
-    .prepare(
-      "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-    )
-    .run(key, value);
+export async function setMeta(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    args: [key, value],
+  });
 }
 
 // グループ設定（ワングループなので meta に持つ）
-export function getDefaultMinCount(): number {
-  const v = getMeta("default_min_count");
+export async function getDefaultMinCount(): Promise<number> {
+  const v = await getMeta("default_min_count");
   return v ? Math.max(2, parseInt(v, 10) || 3) : 3;
 }

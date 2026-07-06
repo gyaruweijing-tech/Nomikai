@@ -5,23 +5,30 @@ export interface Member {
   name: string;
 }
 
-export function findOrCreateMember(name: string): Member {
+export async function findOrCreateMember(name: string): Promise<Member> {
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 20) {
     throw new Error("名前は1〜20文字で入力してください");
   }
-  const db = getDb();
-  db.prepare("INSERT OR IGNORE INTO members (name) VALUES (?)").run(trimmed);
-  return db
-    .prepare("SELECT id, name FROM members WHERE name = ?")
-    .get(trimmed) as Member;
+  const db = await getDb();
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO members (name) VALUES (?)",
+    args: [trimmed],
+  });
+  const rs = await db.execute({
+    sql: "SELECT id, name FROM members WHERE name = ?",
+    args: [trimmed],
+  });
+  return rs.rows[0] as unknown as Member;
 }
 
-export function findMember(name: string): Member | null {
-  const row = getDb()
-    .prepare("SELECT id, name FROM members WHERE name = ?")
-    .get(name.trim()) as Member | undefined;
-  return row ?? null;
+export async function findMember(name: string): Promise<Member | null> {
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: "SELECT id, name FROM members WHERE name = ?",
+    args: [name.trim()],
+  });
+  return (rs.rows[0] as unknown as Member | undefined) ?? null;
 }
 
 export function isValidDate(s: unknown): s is string {

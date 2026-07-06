@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["better-sqlite3", "web-push"],
+  serverExternalPackages: ["@libsql/client", "web-push"],
 };
 
 export default nextConfig;

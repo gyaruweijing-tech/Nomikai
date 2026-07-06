@@ -15,37 +15,43 @@ export async function POST(
   const { name, join } = body;
 
   if (typeof name !== "string") return jsonError("名前が必要です");
-  const member = findMember(name);
+  const member = await findMember(name);
   if (!member) return jsonError("メンバーが見つかりません", 404);
 
-  const db = getDb();
-  const proposal = db
-    .prepare("SELECT id, status FROM proposals WHERE id = ?")
-    .get(proposalId) as { id: number; status: string } | undefined;
+  const db = await getDb();
+  const rs = await db.execute({
+    sql: "SELECT id, status FROM proposals WHERE id = ?",
+    args: [proposalId],
+  });
+  const proposal = rs.rows[0] as unknown as
+    | { id: number; status: string }
+    | undefined;
   if (!proposal) return jsonError("提案が見つかりません", 404);
   if (proposal.status === "expired") return jsonError("この提案は終了しました");
 
   if (join) {
-    db.prepare(
-      "INSERT OR IGNORE INTO attendees (proposal_id, member_id) VALUES (?, ?)"
-    ).run(proposalId, member.id);
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO attendees (proposal_id, member_id) VALUES (?, ?)",
+      args: [proposalId, member.id],
+    });
   } else {
     if (proposal.status === "confirmed") {
       return jsonError("開催確定後のキャンセルは幹事に直接どうぞ🙏");
     }
-    db.prepare(
-      "DELETE FROM attendees WHERE proposal_id = ? AND member_id = ?"
-    ).run(proposalId, member.id);
+    await db.execute({
+      sql: "DELETE FROM attendees WHERE proposal_id = ? AND member_id = ?",
+      args: [proposalId, member.id],
+    });
   }
 
   // 応募で成立ラインに達したら即確定させる
   await runSchedulerTick();
 
-  const status = (
-    db.prepare("SELECT status FROM proposals WHERE id = ?").get(proposalId) as {
-      status: string;
-    }
-  ).status;
+  const after = await db.execute({
+    sql: "SELECT status FROM proposals WHERE id = ?",
+    args: [proposalId],
+  });
+  const status = (after.rows[0] as unknown as { status: string }).status;
 
   return Response.json({ ok: true, status });
 }
